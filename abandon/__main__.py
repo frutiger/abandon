@@ -1,5 +1,6 @@
 # abandon.__main__
 
+import argparse
 import itertools
 import sys
 from   datetime import datetime, timedelta, timezone
@@ -39,7 +40,7 @@ def parse_bucket(bucket_spec: str) -> List[Bucket]:
     num = int(num_str)
     if num <= 0:
         raise RuntimeError(f'Number of buckets ({num_str}) must be positive')
-    return num * [parse_duration(duration_spec)]
+    return num * [(duration_spec, parse_duration(duration_spec))]
 
 def parse_buckets(bucket_specs: List[str]) -> List[Bucket]:
     result = []
@@ -47,12 +48,31 @@ def parse_buckets(bucket_specs: List[str]) -> List[Bucket]:
         result.extend(buckets)
     return result
 
-def main() -> None:
-    buckets = parse_buckets(sys.argv[1:])
-    items   = parse_items(sys.stdin.buffer)
+def parse_args() -> Tuple[bool, List[Bucket]]:
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-v', '--verbose', action='store_true')
+    parser.add_argument('buckets', nargs='*')
+    args = parser.parse_args()
+    return args.verbose, parse_buckets(args.buckets)
 
-    for item in abandon(buckets, items):
-        sys.stdout.buffer.write(item)
+def main() -> None:
+    verbose, buckets = parse_args()
+    items            = parse_items(sys.stdin.buffer)
+
+    for decision in abandon(buckets, items):
+        if not verbose:
+            if decision.abandon:
+                sys.stdout.buffer.write(decision.item)
+        else:
+            if not decision.abandon:
+                assert(decision.bucket is not None)
+                sys.stdout.buffer.write(str(decision.bucket[0]).encode('ascii'))
+            else:
+                sys.stdout.buffer.write(b' ')
+            sys.stdout.buffer.write(b'\t')
+            sys.stdout.buffer.write(str(decision.time).encode('ascii'))
+            sys.stdout.buffer.write(b'\t')
+            sys.stdout.buffer.write(decision.item)
 
 if __name__ == '__main__':
     main()
