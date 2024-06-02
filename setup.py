@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='abandon',
-      version='0.3',
+      version='0.4',
       description='Prune a list of snapshots from particular moments',
       url='https://github.com/frutiger/abandon',
       author='Masud Rahman',

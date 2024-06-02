@@ -40,6 +40,10 @@ def abandon(buckets: List[Bucket], items: Items) -> Iterator[Decision]:
             break
         if last_item_time is None:
             last_item_time = item_times.pop(0)
+            yield Decision(items[last_item_time],
+                           last_item_time,
+                           False,
+                           last_bucket)
 
         last_item_time -= last_bucket[1]
         while True:
